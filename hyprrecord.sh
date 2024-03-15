@@ -100,8 +100,13 @@ record() {
     wl-screenrec -g "$GEOM" $AUDIO -f $FILE
   fi
 }
+# Check if already recording
+if pgrep -x "wl-screenrec" >/dev/null; then
+  pkill -x "wl-screenrec"
+  exit 0
+fi
 
-# Decide on the file to use based on the action
+# Save file to /tmp if we are only looking to copy
 if [ "$ACTION" == "copy" ]; then
   FILE=$FILE_TEMP
 fi
