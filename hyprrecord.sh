@@ -8,12 +8,15 @@ help() {
   echo "  -h, --help          Display this help and exit."
   echo ""
   echo "Actions:"
-  echo "  save                Save the recording to a file."
+  echo "  save[default]       Save the recording to a file."
   echo "  copy                Copy the recording file path to the clipboard."
   echo "  copysave            Save and copy the recording file path to the clipboard."
   echo ""
+  echo "Types:"
+  echo "  video[default]      Record as a mp4."
+  echo "  gif                 Record as a gif"
   echo "Subjects:"
-  echo "  screen              Record the entire screen."
+  echo "  screen[default]     Record the entire screen."
   echo "  area                Record a selected area."
   echo "  active              Record the currently active window."
   echo ""
@@ -21,6 +24,7 @@ help() {
   echo "  $0 save screen       Save a screen recording."
   echo "  $0 -a copy area      Copy an area recording with audio."
   echo "  $0 copysave active   Save and copy an active window recording."
+  echo "  $0 copy area gif     Copy an area as a gif"
 }
 
 getTargetDirectory() {
@@ -37,6 +41,7 @@ AUDIO=""
 ACTION="save"
 FORMAT=mp4
 SUBJECT="screen"
+TYPE=video
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -47,6 +52,10 @@ while [ $# -gt 0 ]; do
     ;;
   copy | save | copysave)
     ACTION="$1"
+    shift
+    ;;
+  video | gif)
+    TYPE="$1"
     shift
     ;;
   -h | --help)
@@ -72,6 +81,14 @@ copyFile() {
   URI="file://$file"
   echo -n $URI | wl-copy -t text/uri-list
   notify "Copied" "Recording copied to clipboard."
+}
+
+convertGif() {
+  local inputFile=$1
+  local outputFile="${inputFile%.*}.gif"
+  notify "Converting to gif"
+  ffmpeg -i "$inputFile" -filter_complex "fps=10,scale=720:-1[s]; [s]split[a][b]; [a]palettegen[palette]; [b][palette]paletteuse" "$outputFile"
+  echo "$outputFile"
 }
 
 record() {
@@ -113,6 +130,10 @@ fi
 
 # Start recording
 record "$FILE"
+
+if [ "$TYPE" == "gif" ]; then
+  FILE=$(convertGif "$FILE")
+fi
 
 # Perform action after recording
 case "$ACTION" in
