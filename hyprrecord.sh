@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 
+help() {
+  echo "Usage: $0 [OPTION]... [ACTION] [SUBJECT]"
+  echo ""
+  echo "Options:"
+  echo "  -a, --audio         Record audio with the video."
+  echo "  -h, --help          Display this help and exit."
+  echo ""
+  echo "Actions:"
+  echo "  save                Save the recording to a file."
+  echo "  copy                Copy the recording file path to the clipboard."
+  echo "  copysave            Save and copy the recording file path to the clipboard."
+  echo ""
+  echo "Subjects:"
+  echo "  screen              Record the entire screen."
+  echo "  area                Record a selected area."
+  echo "  active              Record the currently active window."
+  echo ""
+  echo "Examples:"
+  echo "  $0 save screen       Save a screen recording."
+  echo "  $0 -a copy area      Copy an area recording with audio."
+  echo "  $0 copysave active   Save and copy an active window recording."
+}
+
 getTargetDirectory() {
   test -f "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs" &&
     . "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
@@ -25,6 +48,10 @@ while [ $# -gt 0 ]; do
   copy | save | copysave)
     ACTION="$1"
     shift
+    ;;
+  -h | --help)
+    help
+    exit 0
     ;;
   *)
     SUBJECT="$1"
@@ -60,7 +87,6 @@ record() {
     local GEOM
     GEOM=$(echo "$WINDOWS" | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | slurp $SLURP_ARGS)
 
-    local GEOM_FLAG
   elif [ "$SUBJECT" == "active" ]; then
     local FOCUSED
     FOCUSED=$(hyprctl activewindow -j)
