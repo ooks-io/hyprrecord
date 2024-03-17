@@ -1,30 +1,37 @@
 #!/usr/bin/env bash
 
-help() {
-  echo "Usage: $0 [OPTION]... [ACTION] [SUBJECT]"
+## Hyprrecord: a simple recording script for hyprland
+## Based on grimblast | Author:[misterio77](https://github.com/misterio77)
+
+## Author: [ooks](https://github.com/ooks-io)
+
+usage() {
+  echo "Usage: hyprrecord [OPTION]... [ACTION] [SUBJECT] [TYPE]"
   echo ""
   echo "Options:"
   echo "  -a, --audio         Record audio with the video."
-  echo "  -h, --help          Display this help and exit."
   echo ""
   echo "Actions:"
-  echo "  save[default]       Save the recording to a file."
+  echo "  usage[default]      Print help information"
+  echo "  check               Test if required tools are available and exit."
+  echo "  save                Save the recording to a file."
   echo "  copy                Copy the recording file path to the clipboard."
   echo "  copysave            Save and copy the recording file path to the clipboard."
   echo ""
   echo "Types:"
   echo "  video[default]      Record as a mp4."
   echo "  gif                 Record as a gif"
+  echo ""
   echo "Subjects:"
   echo "  screen[default]     Record the entire screen."
   echo "  area                Record a selected area."
   echo "  active              Record the currently active window."
   echo ""
   echo "Examples:"
-  echo "  $0 save screen       Save a screen recording."
-  echo "  $0 -a copy area      Copy an area recording with audio."
-  echo "  $0 copysave active   Save and copy an active window recording."
-  echo "  $0 copy area gif     Copy an area as a gif"
+  echo "  hyprrecord save screen       Save a screen recording."
+  echo "  hyprrecord -a copy area      Copy an area recording with audio."
+  echo "  hyprrecord copysave active   Save and copy an active window recording."
+  echo "  hyprrecord copy area gif     Copy an area as a gif"
 }
 
 getTargetDirectory() {
@@ -37,10 +44,10 @@ tempFile() {
   echo "/tmp/hyprrecord-$(date -Ins).$FORMAT"
 }
 
-AUDIO=""
-ACTION="save"
+AUDIO=
+ACTION=usage
 FORMAT=mp4
-SUBJECT="screen"
+SUBJECT=screen
 TYPE=video
 
 while [ $# -gt 0 ]; do
@@ -50,17 +57,13 @@ while [ $# -gt 0 ]; do
     AUDIO="--audio --audio-device $(pactl get-default-sink).monitor"
     shift
     ;;
-  copy | save | copysave)
+  copy | save | copysave | usage | check)
     ACTION="$1"
     shift
     ;;
   video | gif)
     TYPE="$1"
     shift
-    ;;
-  -h | --help)
-    help
-    exit 0
     ;;
   *)
     SUBJECT="$1"
@@ -76,75 +79,92 @@ notify() {
   notify-send -t 3000 -a hyprrecord "$1" "$2"
 }
 
+check() {
+  COMMAND=$1
+  if command -v "$COMMAND" >/dev/null 2>&1; then
+    RESULT="OK"
+  else
+    RESULT="NOT FOUND"
+  fi
+  echo "   $COMMAND: $RESULT"
+}
+
 copyFile() {
   local file=$1
   URI="file://$file"
   echo -n $URI | wl-copy -t text/uri-list
-  notify "Copied" "Recording copied to clipboard."
 }
 
 convertGif() {
   local inputFile=$1
   local outputFile="${inputFile%.*}.gif"
-  notify "Converting to gif"
+  notify "Converting to gif..."
   ffmpeg -i "$inputFile" -filter_complex "fps=10,scale=720:-1[s]; [s]split[a][b]; [a]palettegen[palette]; [b][palette]paletteuse" "$outputFile"
   echo "$outputFile"
 }
 
 record() {
   local FILE=$1
-  local GEOM=""
   if [ "$SUBJECT" == "area" ]; then
-    local WORKSPACES
     WORKSPACES="$(hyprctl monitors -j | jq -r 'map(.activeWorkspace.id)')"
-
-    local WINDOWS
     WINDOWS="$(hyprctl clients -j | jq -r --argjson workspaces "$WORKSPACES" 'map(select([.workspace.id] | inside($workspaces)))')"
-
-    local GEOM
     GEOM=$(echo "$WINDOWS" | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | slurp $SLURP_ARGS)
-
   elif [ "$SUBJECT" == "active" ]; then
-    local FOCUSED
     FOCUSED=$(hyprctl activewindow -j)
-    local GEOM
     GEOM=$(echo "$FOCUSED" | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
   fi
-
   if [ "$SUBJECT" == "screen" ]; then
     wl-screenrec $AUDIO -f $FILE
   else
     wl-screenrec -g "$GEOM" $AUDIO -f $FILE
   fi
 }
+
+if [ "$ACTION" == "usage" ]; then
+  usage
+  exit 0
+elif [ "$ACTION" == "check" ]; then
+  echo "Checking if required tools are available".
+  check hyprctl
+  check slurp
+  check wl-screenrec
+  check pactl
+  check wl-copy
+  check jq
+  check notify-send
+  check ffmpeg
+  exit 0
+fi
+
 # Check if already recording
 if pgrep -x "wl-screenrec" >/dev/null; then
   pkill -x "wl-screenrec"
   exit 0
 fi
 
-# Save file to /tmp if we are only looking to copy
+# save file to /tmp if we are only looking to copy
 if [ "$ACTION" == "copy" ]; then
   FILE=$FILE_TEMP
 fi
 
-# Start recording
+# start recording
 record "$FILE"
 
 if [ "$TYPE" == "gif" ]; then
   FILE=$(convertGif "$FILE")
 fi
 
-# Perform action after recording
+# actions to perform after recording
 case "$ACTION" in
 save)
-  notify "Saved" "Recording saved to $FILE"
+  notify "Recording saved" "$FILE"
   ;;
 copy)
   copyFile "$FILE"
+  notify "Recording copied to clipboard"
   ;;
 copysave)
   copyFile "$FILE"
-  notify "Saved" "Recording saved to $FILE"
+  notify "Recording copied & saved" "$FILE"
   ;;
 esac

@@ -6,7 +6,7 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 # SYNOPSIS
 
-*hyprrecord* [**-a**] [**-h**] [ACTION] [SUBJECT] [TYPE]
+*hyprrecord* [**-a**] [ACTION] [SUBJECT] [TYPE]
 
 # DESCRIPTION
 
@@ -17,12 +17,13 @@ hyprrecord - Simple screen recording utility for Hyprland.
 *-a, --audio*
 	Enable audio recording, using the default sink from PulseAudio *$(pactl get-default-sink).*
 
-*-h, --help*
-	Display help information and exit
-
 # ACTIONS
 
-*save* [**default**]
+*usage* [**default**]
+	Print help information and exit
+*check*
+	Test if required tools are available and exit
+*save*:
 	Tries to save the recording to **$XDG_RECORDINGS_DIR** or **$XDG_VIDEOS_DIR** if the
 	former doesn't exist.
 
