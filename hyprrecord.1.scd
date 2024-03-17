@@ -10,8 +10,7 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 # DESCRIPTION
 
-**hyprrecord** is a utility for screen recording in the Hyprland window manager, supporting
- various options for audio, output type, and target recording area.
+**hyprrecord** is a utility for screen recording in the Hyprland window manager, supporting various options for audio, output type, and target recording area.
 
 # OPTIONS
 

@@ -1,4 +1,5 @@
-> [!WARNING] This script is still in a prototype/proof-of-concept stage. Needs a
+> [!WARNING]
+> This script is still in a prototype/proof-of-concept stage. Needs a
 > lot of cleaning up.
 
 # hyprrecord
