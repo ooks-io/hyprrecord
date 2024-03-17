@@ -1,10 +1,11 @@
-> [!WARNING]
-> This script is still in a prototype/proof-of-concept stage. Needs a
-> lot of cleaning up.
+> [!WARNING]\
+> This script is still in a prototype/proof-of-concept stage. Needs a lot of
+> cleaning up.
 
-# hyprrecord
+# Hyprrecord
 
-A simple screen recording script for hyprland, based on
+A simple screen recording script for
+[hyprland](https://github.com/hyprwm/hyprland), based on
 [grimblast](https://github.com/hyprwm/contrib/tree/main/grimblast).
 
 ## Tools used
@@ -24,3 +25,4 @@ A simple screen recording script for hyprland, based on
 - Microphone option (_requires pipewire creating a virtual output with multiple
   audio streams_)
 - Convert to WebP (_will require building ffmpeg with libwebp_)
+- Waybar/AGS support (_function that prints json recording status?_)
