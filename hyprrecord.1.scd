@@ -4,33 +4,38 @@ hyprrecord(1)
 
 hyprrecord - Simple screen recording utility for Hyprland.
 
-# Usage
+# SYNOPSIS
 
-*hyprrecord* [OPTIONS]... [ACTION] [SUBJECT] [TYPE]
+*hyprrecord* [**-a**] [**-h**] [ACTION] [SUBJECT] [TYPE]
 
-# Options
+# DESCRIPTION
+
+**hyprrecord** is a utility for screen recording in the Hyprland window manager, supporting
+ various options for audio, output type, and target recording area.
+
+# OPTIONS
 
 *-a, --audio*
-	enable audio for recording, uses $(pact get-default-sink).
+	Enable audio recording, using the default sink from PulseAudio *$(pactl get-default-sink).*
 
 *-h, --help*
-	prints help screen
+	Display help information and exit
 
-# Actions
+# ACTIONS
 
-*save* [default]
-	Saves the recording to $XDG_RECORDINGS_DIR ($HOME/Videos/Recordings) if exists
-	otherwise it saves to $XDG_VIDEOS_DIR.
+*save* [**default**]
+	Tries to save the recording to **$XDG_RECORDINGS_DIR** or **$XDG_VIDEOS_DIR** if the
+	former doesn't exist.
 
 *copy*
-	Copy recording to clipboard.
+	Copy the recording file to the clipboard.
 
 *copysave*
-	Combine the previous two options.
+	Save the recording and copy the file to the clipboard.
 
-# Subjects
+# SUBJECTS
 	
-*screen* [default]
+*screen* [**default**]
 	Record the entire screen.
 
 *area*
@@ -41,19 +46,19 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 # Types
 
-*video* [default]
+*video* [**default**]
 	Record as a mp4 video.
 
 *gif*
-	Records as mp4 then converts to gif with ffmpeg.
+	Records as mp4 and then converts to GIF with **ffmpeg**.
 
 # Examples
 
 *hyprrecord -a copy area video*
-	Record a video with audio of a selected area and copy it into clipboard.
+	Record a video with audio of a selected area and copy the file to the clipboard.
 
 *hyprrecord copysave active video*
-	Record a video of the currently active window, copy it into the clipboard and save to Recording Directory.
+	Record a video of the currently active window, save it and copy the file to the clipboard.
 
-*hyprrecord area gif* 
-	Record a gif of a selected area and copy it into the clipboard.
+*hyprrecord save screen gif* 
+	Record the entire screen, convert to GIF and save the file.
