@@ -10,6 +10,7 @@ usage() {
   echo ""
   echo "Options:"
   echo "  -a, --audio         Record audio with the video."
+  echo "  -w, --waybar        Enable waybar integration (check man page for more information)."
   echo ""
   echo "Actions:"
   echo "  usage[default]      Print help information"
@@ -49,12 +50,17 @@ ACTION=usage
 FORMAT=mp4
 SUBJECT=screen
 TYPE=video
+WAYBAR=
 
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
   -a | --audio)
     AUDIO="--audio --audio-device $(pactl get-default-sink).monitor"
+    shift
+    ;;
+  -w | --waybar)
+    WAYBAR=true
     shift
     ;;
   copy | save | copysave | usage | check)
@@ -120,6 +126,20 @@ record() {
   fi
 }
 
+startRecording() {
+  if [ "$WAYBAR" == "true" ]; then
+    pkill -RTMIN+12 waybar
+  fi
+  record $FILE
+}
+
+stopRecording() {
+  pkill -x "wl-screenrec"
+  if [ "$WAYBAR" == "true" ]; then
+    pkill -RTMIN+12 waybar
+  fi
+}
+
 if [ "$ACTION" == "usage" ]; then
   usage
   exit 0
@@ -138,7 +158,7 @@ fi
 
 # Check if already recording
 if pgrep -x "wl-screenrec" >/dev/null; then
-  pkill -x "wl-screenrec"
+  stopRecording
   exit 0
 fi
 
@@ -148,7 +168,7 @@ if [ "$ACTION" == "copy" ]; then
 fi
 
 # start recording
-record "$FILE"
+startRecording
 
 if [ "$TYPE" == "gif" ]; then
   FILE=$(convertGif "$FILE")

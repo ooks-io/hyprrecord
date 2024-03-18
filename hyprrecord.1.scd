@@ -6,7 +6,7 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 # SYNOPSIS
 
-*hyprrecord* [**-a**] [ACTION] [SUBJECT] [TYPE]
+*hyprrecord* [**-a**] [**-w**] [ACTION] [SUBJECT] [TYPE]
 
 # DESCRIPTION
 
@@ -16,6 +16,8 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 *-a, --audio*
 	Enable audio recording, using the default sink from PulseAudio *$(pactl get-default-sink).*
+*-w, --waybar*
+	Enables waybar integration by sending a signal(12) to waybar, see https://github.com/ooks-io/hyprrecord for example implementation. 
 
 # ACTIONS
 
