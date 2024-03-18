@@ -47,7 +47,6 @@ tempFile() {
 
 AUDIO=
 ACTION=usage
-FORMAT=mp4
 SUBJECT=screen
 TYPE=video
 WAYBAR=
@@ -78,6 +77,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+FORMAT=mp4
 FILE=$(getTargetDirectory)/$(date -Ins).$FORMAT
 FILE_TEMP=$(tempFile)
 
@@ -109,34 +109,29 @@ convertGif() {
   echo "$outputFile"
 }
 
+waybarSignal() {
+  if [ "$WAYBAR" == "true" ]; then
+    pkill -RTMIN+12 waybar
+  fi
+}
+
 record() {
   local FILE=$1
   if [ "$SUBJECT" == "area" ]; then
     WORKSPACES="$(hyprctl monitors -j | jq -r 'map(.activeWorkspace.id)')"
     WINDOWS="$(hyprctl clients -j | jq -r --argjson workspaces "$WORKSPACES" 'map(select([.workspace.id] | inside($workspaces)))')"
     GEOM=$(echo "$WINDOWS" | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | slurp $SLURP_ARGS)
+    [ -n "$GEOM" ] && waybarSignal
   elif [ "$SUBJECT" == "active" ]; then
     FOCUSED=$(hyprctl activewindow -j)
     GEOM=$(echo "$FOCUSED" | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
+    waybarSignal
   fi
+
   if [ "$SUBJECT" == "screen" ]; then
     wl-screenrec $AUDIO -f $FILE
   else
     wl-screenrec -g "$GEOM" $AUDIO -f $FILE
-  fi
-}
-
-startRecording() {
-  if [ "$WAYBAR" == "true" ]; then
-    pkill -RTMIN+12 waybar
-  fi
-  record $FILE
-}
-
-stopRecording() {
-  pkill -x "wl-screenrec"
-  if [ "$WAYBAR" == "true" ]; then
-    pkill -RTMIN+12 waybar
   fi
 }
 
@@ -158,7 +153,11 @@ fi
 
 # Check if already recording
 if pgrep -x "wl-screenrec" >/dev/null; then
-  stopRecording
+  kill -SIGINT $(pgrep -x wl-screenrec)
+  while pgrep -x wl-screenrec >/dev/null; do
+    sleep 0.5
+  done
+  waybarSignal
   exit 0
 fi
 
@@ -168,7 +167,8 @@ if [ "$ACTION" == "copy" ]; then
 fi
 
 # start recording
-startRecording
+waybarSignal
+record $FILE
 
 if [ "$TYPE" == "gif" ]; then
   FILE=$(convertGif "$FILE")
