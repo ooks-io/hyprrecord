@@ -147,7 +147,7 @@ $ hyprrecord [OPTION]... [TYPE] [SUBJECT] [ACTION]
 
 To add keybinding to hyprland you can add these lines to your _hyprland.conf_
 
-```config
+```bash
 # ~/.config/hypr/hyprland.conf
 
 # Record entire screen with sound, save and copy into clipboard
