@@ -99,54 +99,49 @@ Add the package to configuration:
 ```
 
 ## Usage
-
-`hyprrecord [OPTION]... [ACTION] [SUBJECT] [TYPE]`
-
+``` bash
+$ hyprrecord [OPTION]... [TYPE] [SUBJECT] [ACTION]
+```
 ### Options
 
-`-a`, `--audio`: Enable audio recording, uses
-[pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get
-the current default sink.
-
-`-w`, `--waybar`: Enable Waybar integration. See
-[Waybar Integration](#waybar-integration) for more infomation.
+| Command                            | Result                                    |
+| ---------------------------------- | ----------------------------------------- |
+| `-a`, `--audio`  | Enable audio recording, uses [pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get the current default sink |
+| `-w`, `--waybar` | Enable Waybar integration. See [Waybar Integration](#waybar-integration) for more infomation. |
 
 ### Types
 
-`video` [**default**]: Record video as mp4
-
-`gif`: Record video as mp4, then convert to gif with ffmpeg.
+| Command                            | Result                                    |
+| ---------------------------------- | ----------------------------------------- |
+| `video` [**default**] | Record video as mp4                                    |
+| `gif`                 | Record video as mp4, then convert to gif with ffmpeg.  |
 
 ### Subjects
 
-`screen` [**default**]: Record currently active screen.
-
-`area`: Record a selected area.
-
-`active`: Record the currently focused window.
+| Command                            | Result                                    |
+| ---------------------------------- | ----------------------------------------- |
+| `screen`[**default**]  | Record currently active screen |
+| `area`                 |Record a selected area |
+| `active`               |Record the currently focused window |
 
 ### Actions
 
-`usage` [**default**]: Print help information.
-
-`check`: Tests to see if dependencies are available.
-
-`save`: Save the recording to **$XDG_RECORDINGS_DIR** if it exists, otherwise
-save to **$XDG_VIDEOS_DIR**. If neither exists, save to **$HOME**.
-
-`copy`: Save recording to /tmp and put file into clipboard.
-
-`copysave`: Save recording and put into clipboard.
+| Command                            | Result                                    |
+| ---------------------------------- | ----------------------------------------- |
+| `usage`[**default**] | Print help information. |
+| `check`              | Tests to see if dependencies are available. |
+| `save`               | Save the recording to **$XDG_RECORDINGS_DIR** if it exists, otherwise save to **$XDG_VIDEOS_DIR**. If neither exists, save to **$HOME**. |
+| `copy`               | Save recording to /tmp and put file into clipboard. |
+| `copysave`           | Save recording and put into clipboard. |
 
 ### Examples
 
-`hyprrecord save screen` Save a screen recording.
-
-`hyprrecord -a copy area` Copy an area recording with audio.
-
-`hyprrecord copysave active` Save and copy an active window recording.
-
-`hyprrecord copy area gif` Copy an area as a gif.
+| Command                            | Result                                    |
+| ---------------------------------- | ----------------------------------------- |
+| `hyprrecord video screen save`     | Record the entire screen and save to recording directory |  
+|`hyprrecord -a video area copy`     | Record a video with audio of a selected area and copy into clipboard |
+| `hyprrecord video active copysave` | Record video of currently focused window, save to recording directory & copy into clipboard |
+| `hyprrecord gif area copy`         | Record video of a selected area, convert into gif and copy into clipboard. |
 
 ## Hyprland Integration
 
