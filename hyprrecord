@@ -83,7 +83,7 @@ elif [[ ! "$ACTION" =~ ^(copy|save|copysave|usage|check) ]]; then
 fi
 
 if [ "$ACTION" = "usage" ]; then
-  echo "Usage: hyprrecord [OPTION]... [TYPE: video | gif] [SUBJECT: screen | active | area] [ACTION: save | copy | copysave]"
+  echo "Usage: hyprrecord [OPTION]... [TYPE:video|gif] [SUBJECT:screen|active|area] [ACTION:save|copy|copysave]"
   echo ""
   echo "Options:"
   echo "  -a, --audio         Record audio with the video."
