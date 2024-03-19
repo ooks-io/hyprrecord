@@ -6,7 +6,7 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 # SYNOPSIS
 
-*hyprrecord* [**-a**] [**-w**] [ACTION] [SUBJECT] [TYPE]
+*hyprrecord* [**-a**] [**-w**] [TYPE] [SUBJECT] [ACTION]
 
 # DESCRIPTION
 
@@ -18,6 +18,26 @@ hyprrecord - Simple screen recording utility for Hyprland.
 	Enable audio recording, using the default sink from PulseAudio *$(pactl get-default-sink).*
 *-w, --waybar*
 	Enables waybar integration by sending a signal(12) to waybar, see https://github.com/ooks-io/hyprrecord for example implementation. 
+
+# Types
+
+*video* [**default**]
+	Record as a mp4 video.
+
+*gif*
+	Records as mp4 and then converts to GIF with **ffmpeg**.
+
+# SUBJECTS
+	
+*screen* [**default**]
+	Record the entire screen.
+
+*area*
+	Record a selected area using slurp.
+
+*active*
+	Record currently focused window.
+
 
 # ACTIONS
 
@@ -34,25 +54,6 @@ hyprrecord - Simple screen recording utility for Hyprland.
 
 *copysave*
 	Save the recording and copy the file to the clipboard.
-
-# SUBJECTS
-	
-*screen* [**default**]
-	Record the entire screen.
-
-*area*
-	Record a selected area using slurp.
-
-*active*
-	Record currently focused window.
-
-# Types
-
-*video* [**default**]
-	Record as a mp4 video.
-
-*gif*
-	Records as mp4 and then converts to GIF with **ffmpeg**.
 
 # Examples
 

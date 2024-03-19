@@ -5,19 +5,89 @@
 
 ## Author: [ooks](https://github.com/ooks-io)
 
-usage() {
-  echo "Usage: hyprrecord [OPTION]... [ACTION] [SUBJECT] [TYPE]"
+AUDIO_FLAG=
+WAYBAR_FLAG=
+
+while [ $# -gt 0 ]; do
+  key="$1"
+  case $key in
+  -a | --audio)
+    AUDIO_FLAG=true
+    shift
+    ;;
+  -w | --waybar)
+    WAYBAR_FLAG=true
+    shift
+    ;;
+  *)
+    break
+    ;;
+  esac
+done
+
+FORMAT=mp4
+
+recording_directory() {
+  test -f "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs" &&
+    . "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
+  echo "${XDG_RECORDINGS_DIR:-${XDG_VIDEOS_DIR:-$HOME}}"
+}
+
+recording_file() {
+  if [ "$ACTION" = "copy" ]; then
+    FILE=$(mktemp "/tmp/hyprecord-XXXXXX.$FORMAT")
+  else
+    FILE="$(recording_directory)/$(date +%Y-%m-%d_%H-%M-%S)_$(uuidgen | cut -d "-" -f5).$FORMAT"
+  fi
+
+  echo "$FILE"
+}
+
+get_audio() {
+  SINK="$(pactl get-default-sink).monitor"
+  AUDIO="--audio --audio-device $SINK"
+  echo "$AUDIO"
+}
+
+notify() {
+  notify-send -t 3000 -a hyprrecord "$@"
+}
+
+notify_succeed() {
+  notify "$@"
+}
+
+notify_error() {
+  TITLE=${2:-"RECORDING ERROR"}
+  MESSAGE=${1:-"Error recording with wl-screenrec"}
+  notify -u critical "$TITLE" "$MESSAGE"
+}
+
+error_exit() {
+  notify_error "$1"
+  echo "$1"
+  exit 2
+}
+
+TYPE=${1:-video}
+SUBJECT=${2:-screen}
+ACTION=${3:-usage}
+
+# Validate user input
+if [[ ! "$TYPE" =~ ^(video|gif) ]]; then
+  error_exit "Invalid TYPE: $TYPE (expected video or gif)"
+elif [[ ! "$SUBJECT" =~ ^(screen|area|active) ]]; then
+  error_exit "Invalid SUBJECT: $SUBJECT (expected screen, area or active)"
+elif [[ ! "$ACTION" =~ ^(copy|save|copysave|usage|check) ]]; then
+  error_exit "Invalid ACTION: $ACTION (expected copy, save, copysave, usage or check)"
+fi
+
+if [ "$ACTION" = "usage" ]; then
+  echo "Usage: hyprrecord [OPTION]... [TYPE: video | gif] [SUBJECT: screen | active | area] [ACTION: save | copy | copysave]"
   echo ""
   echo "Options:"
   echo "  -a, --audio         Record audio with the video."
   echo "  -w, --waybar        Enable waybar integration (check man page for more information)."
-  echo ""
-  echo "Actions:"
-  echo "  usage[default]      Print help information"
-  echo "  check               Test if required tools are available and exit."
-  echo "  save                Save the recording to a file."
-  echo "  copy                Copy the recording file path to the clipboard."
-  echo "  copysave            Save and copy the recording file path to the clipboard."
   echo ""
   echo "Types:"
   echo "  video[default]      Record as a mp4."
@@ -28,62 +98,20 @@ usage() {
   echo "  area                Record a selected area."
   echo "  active              Record the currently active window."
   echo ""
+  echo "Actions:"
+  echo "  usage[default]      Print help information"
+  echo "  check               Test if required tools are available and exit."
+  echo "  save                Save the recording to a file."
+  echo "  copy                Copy the recording file path to the clipboard."
+  echo "  copysave            Save and copy the recording file path to the clipboard."
+  echo ""
   echo "Examples:"
-  echo "  hyprrecord save screen       Save a screen recording."
-  echo "  hyprrecord -a copy area      Copy an area recording with audio."
-  echo "  hyprrecord copysave active   Save and copy an active window recording."
-  echo "  hyprrecord copy area gif     Copy an area as a gif"
-}
-
-getTargetDirectory() {
-  test -f "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs" &&
-    . "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
-  echo "${XDG_RECORDINGS_DIR:-${XDG_PICTURES_DIR:-$HOME}}"
-}
-
-tempFile() {
-  echo "/tmp/hyprrecord-$(date -Ins).$FORMAT"
-}
-
-AUDIO=
-ACTION=usage
-SUBJECT=screen
-TYPE=video
-WAYBAR=
-
-while [ $# -gt 0 ]; do
-  key="$1"
-  case $key in
-  -a | --audio)
-    AUDIO="--audio --audio-device $(pactl get-default-sink).monitor"
-    shift
-    ;;
-  -w | --waybar)
-    WAYBAR=true
-    shift
-    ;;
-  copy | save | copysave | usage | check)
-    ACTION="$1"
-    shift
-    ;;
-  video | gif)
-    TYPE="$1"
-    shift
-    ;;
-  *)
-    SUBJECT="$1"
-    shift
-    ;;
-  esac
-done
-
-FORMAT=mp4
-FILE=$(getTargetDirectory)/$(date -Ins).$FORMAT
-FILE_TEMP=$(tempFile)
-
-notify() {
-  notify-send -t 3000 -a hyprrecord "$1" "$2"
-}
+  echo "  hyprrecord video screen save       Save a screen recording."
+  echo "  hyprrecord -a video area copy      Copy an area recording with audio."
+  echo "  hyprrecord video active copysave   Save and copy an active window recording."
+  echo "  hyprrecord gif area copy           Copy an area as a gif"
+  exit
+fi
 
 check() {
   COMMAND=$1
@@ -95,51 +123,85 @@ check() {
   echo "   $COMMAND: $RESULT"
 }
 
-copyFile() {
+copy_file() {
   local file=$1
   URI="file://$file"
   echo -n $URI | wl-copy -t text/uri-list
 }
 
-convertGif() {
-  local inputFile=$1
-  local outputFile="${inputFile%.*}.gif"
+convert_to_gif() {
+  local input=$1
+  local output="${input%.*}.gif"
   notify "Converting to gif..."
-  ffmpeg -i "$inputFile" -filter_complex "fps=10,scale=720:-1[s]; [s]split[a][b]; [a]palettegen[palette]; [b][palette]paletteuse" "$outputFile"
-  echo "$outputFile"
+  ffmpeg -i "$input" -filter_complex "fps=10,scale=720:-1[s]; [s]split[a][b]; [a]palettegen[palette]; [b][palette]paletteuse" "$output"
+  echo "$output"
 }
 
-waybarSignal() {
-  if [ "$WAYBAR" == "true" ]; then
+send_waybar_signal() {
+  if [ "$WAYBAR_FLAG" == "true" ]; then
     pkill -RTMIN+12 waybar
   fi
 }
 
-record() {
-  local FILE=$1
+calculate_geometry() {
+  local GEOM=""
+  local WORKSPACE
+  local WINDOWS
+  local FOCUSED
   if [ "$SUBJECT" == "area" ]; then
-    WORKSPACES="$(hyprctl monitors -j | jq -r 'map(.activeWorkspace.id)')"
-    WINDOWS="$(hyprctl clients -j | jq -r --argjson workspaces "$WORKSPACES" 'map(select([.workspace.id] | inside($workspaces)))')"
+    WORKSPACE="$(hyprctl monitors -j | jq -r 'map(.activeWorkspace.id)')"
+    WINDOWS="$(hyprctl clients -j | jq -r --argjson workspaces "$WORKSPACE" 'map(select([.workspace.id] | inside($workspaces)))')"
     GEOM=$(echo "$WINDOWS" | jq -r '.[] | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | slurp $SLURP_ARGS)
-    [ -n "$GEOM" ] && waybarSignal
   elif [ "$SUBJECT" == "active" ]; then
     FOCUSED=$(hyprctl activewindow -j)
     GEOM=$(echo "$FOCUSED" | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')
-    waybarSignal
+  elif [ "$SUBJECT" = "screen" ]; then
+    GEOM=""
   fi
 
-  if [ "$SUBJECT" == "screen" ]; then
-    wl-screenrec $AUDIO -f $FILE
+  if [ -n "$GEOM" ]; then
+    send_waybar_signal
+  fi
+
+  echo "$GEOM"
+}
+
+FILE=$(recording_file)
+
+start_recording() {
+  FILE=$1
+  GEOM=$(calculate_geometry)
+  if [ "$AUDIO_FLAG" == "true" ]; then
+    AUDIO=$(get_audio)
   else
-    wl-screenrec -g "$GEOM" $AUDIO -f $FILE
+    AUDIO=""
+  fi
+  send_waybar_signal
+  if [ -n "$OUTPUT" ]; then
+    wl-screenrec $AUDIO -o "$OUTPUT" -f "$FILE" || error_exit "Failed to start recording"
+  elif [ -z "$GEOM" ]; then
+    wl-screenrec $AUDIO -f "$FILE" || error_exit "Failed to start recording"
+  else
+    wl-screenrec $AUDIO -g "$GEOM" -f "$FILE" || error_exit "Failed to start recording"
   fi
 }
 
-if [ "$ACTION" == "usage" ]; then
-  usage
-  exit 0
-elif [ "$ACTION" == "check" ]; then
-  echo "Checking if required tools are available".
+stop_recording() {
+  if pgrep wl-screenrec >/dev/null; then
+    kill -SIGINT $(pgrep -x wl-screenrec)
+
+    # wait for wl-screenrec process to end before sending waybar signal
+    while pgrep -x wl-screenrec >/dev/null; do
+      sleep 0.1
+    done
+
+    send_waybar_signal
+    exit 0
+  fi
+}
+
+if [ "$ACTION" == "check" ]; then
+  echo "Checking if dependencies are available".
   check hyprctl
   check slurp
   check wl-screenrec
@@ -151,40 +213,25 @@ elif [ "$ACTION" == "check" ]; then
   exit 0
 fi
 
-# Check if already recording
-if pgrep -x "wl-screenrec" >/dev/null; then
-  kill -SIGINT $(pgrep -x wl-screenrec)
-  while pgrep -x wl-screenrec >/dev/null; do
-    sleep 0.5
-  done
-  waybarSignal
-  exit 0
-fi
+stop_recording || error_exit "Failed to stop recording"
 
-# save file to /tmp if we are only looking to copy
-if [ "$ACTION" == "copy" ]; then
-  FILE=$FILE_TEMP
-fi
-
-# start recording
-waybarSignal
-record $FILE
+start_recording "$FILE" || error_exit "Failed to start recording"
 
 if [ "$TYPE" == "gif" ]; then
-  FILE=$(convertGif "$FILE")
+  FILE=$(convert_to_gif "$FILE") || notify_error "Failed to convert to GIF"
 fi
 
 # actions to perform after recording
 case "$ACTION" in
 save)
-  notify "Recording saved" "$FILE"
+  notify_succeed "Recording saved" "$FILE"
   ;;
 copy)
-  copyFile "$FILE"
-  notify "Recording copied to clipboard"
+  copy_file "$FILE" || error_exit "Failed to copy into clipboard"
+  notify_succeed "Recording copied to clipboard"
   ;;
 copysave)
-  copyFile "$FILE"
-  notify "Recording copied & saved" "$FILE"
+  copy_file "$FILE" || error_exit "Failed to copy into clipboard"
+  notify_succeed "Recording copied & saved" "$FILE"
   ;;
 esac

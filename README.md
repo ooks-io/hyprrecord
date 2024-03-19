@@ -1,7 +1,9 @@
 > [!WARNING]\
-> Still in a prototype stage. Script is currently hacked together and requires cleanup. Feedback welcome.
+> Still in a prototype stage. Script is currently hacked together and requires
+> cleanup. Feedback welcome.
 
-[Dependencies](#dependencies) | [Installation](#installation) | [Usage](#usage) | [Waybar](#waybar-integration) | [Planned](#features-planned-for-the-future)
+[Dependencies](#dependencies) | [Installation](#installation) | [Usage](#usage)
+| [Waybar](#waybar-integration) | [Planned](#features-planned-for-the-future)
 
 # Hyprrecord
 
@@ -13,7 +15,8 @@ A simple screen recording script for
 
 - [wl-screenrec](https://github.com/russelltg/wl-screenrec): A Wayland screen
   recording utility
-- [wl-clipboard](https://github.com/bugaevc/wl-clipboard): A Wayland clipboard utility.
+- [wl-clipboard](https://github.com/bugaevc/wl-clipboard): A Wayland clipboard
+  utility.
 - [slurp](https://github.com/emersion/slurp): For selecting a region in wayland.
 - [ffmpeg](https://ffmpeg.org/): Tool used to convert, stream and manipulate
   media.
@@ -25,7 +28,7 @@ A simple screen recording script for
 
 ### Manual
 
-``` shell
+```shell
 $ git clone https://github.com/ooks-io/hyprrecord.git
 $ cd hyprrecord
 $ make
@@ -40,7 +43,7 @@ rm -rf hyprrecord
 
 Add flake as input:
 
-``` nix
+```nix
 # flake.nix
 {
   inputs = {
@@ -53,13 +56,11 @@ Add flake as input:
 }
 
 # ... rest of flake
-
 ```
 
 Ensure inputs are being passed into your home-manager/nixos config:
 
-
-``` nix
+```nix
 # flake.nix
 homeConfiguration = {
   "YOURHOMEHERE" = home-manager.lib.homeManagerConfiguration {
@@ -69,7 +70,7 @@ homeConfiguration = {
 };
 ```
 
-``` nix
+```nix
 #flake.nix
 nixosConfiguration = {
   SYSTEMHERE = nixpkgs.lib.nixosSystem {
@@ -81,14 +82,15 @@ nixosConfiguration = {
 
 Add the package to configuration:
 
-``` nix
+```nix
 #home.nix
 { pkgs, inputs, ... }:
 {
   home.packages = [ inputs.hyprrecord.packages.${pkgs.system}.hyprrecord ];
 }
 ```
-``` nix
+
+```nix
 #configuration.nix
 { pkgs, inputs, ... }:
 {
@@ -100,25 +102,22 @@ Add the package to configuration:
 
 `hyprrecord [OPTION]... [ACTION] [SUBJECT] [TYPE]`
 
-**Options:**
+### Options
 
-`-a`, `--audio`: Enable audio recording, uses [pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get the current default sink.
+`-a`, `--audio`: Enable audio recording, uses
+[pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get
+the current default sink.
 
-`-w`, `--waybar`: Enable Waybar integration. See [Waybar Integration](#waybar-integration) for more infomation.
+`-w`, `--waybar`: Enable Waybar integration. See
+[Waybar Integration](#waybar-integration) for more infomation.
 
-**Actions:**
+### Types
 
-`usage` [**default**]: Print help information.
+`video` [**default**]: Record video as mp4
 
-`check`: Tests to see if dependencies are available.
+`gif`: Record video as mp4, then convert to gif with ffmpeg.
 
-`save`: Save the recording to **$XDG_RECORDINGS_DIR** if it exists, otherwise save to **$XDG_VIDEOS_DIR**. If neither exists, save to **$HOME**.
-
-`copy`: Save recording to /tmp and put file into clipboard.
-
-`copysave`: Save recording and put into clipboard.
-
-**SUBJECTS:**
+### Subjects
 
 `screen` [**default**]: Record currently active screen.
 
@@ -126,27 +125,34 @@ Add the package to configuration:
 
 `active`: Record the currently focused window.
 
-**TYPES:**
+### Actions
 
-`video` [**default**]: Record video as mp4
+`usage` [**default**]: Print help information.
 
-`gif`: Record video as mp4, then convert to gif with ffmpeg.
+`check`: Tests to see if dependencies are available.
 
-**Examples:**
+`save`: Save the recording to **$XDG_RECORDINGS_DIR** if it exists, otherwise
+save to **$XDG_VIDEOS_DIR**. If neither exists, save to **$HOME**.
 
-`hyprrecord save screen`       Save a screen recording.
+`copy`: Save recording to /tmp and put file into clipboard.
 
-`hyprrecord -a copy area`      Copy an area recording with audio.
+`copysave`: Save recording and put into clipboard.
 
-`hyprrecord copysave active`   Save and copy an active window recording.
+### Examples
 
-`hyprrecord copy area gif`     Copy an area as a gif.
+`hyprrecord save screen` Save a screen recording.
+
+`hyprrecord -a copy area` Copy an area recording with audio.
+
+`hyprrecord copysave active` Save and copy an active window recording.
+
+`hyprrecord copy area gif` Copy an area as a gif.
 
 ## Hyprland Integration
 
 To add keybinding to hyprland you can add these lines to your _hyprland.conf_
 
-``` config
+```config
 # ~/.config/hypr/hyprland.conf
 
 # Record entire screen with sound, save and copy into clipboard
@@ -161,11 +167,13 @@ bind = SUPER SHIFT, R, exec, hyprrecord -a area copysave video
 
 ## Waybar Integration
 
-Waybar integration is achieved by sending a signal to waybar when recording starts and stops.
+Waybar integration is achieved by sending a signal to waybar when recording
+starts and stops.
 
-To start, add the `--waybar` flag to your command and configure with a custom moddule in waybar's configuration:
+To start, add the `--waybar` flag to your command and configure with a custom
+moddule in waybar's configuration:
 
-``` jsonc
+```jsonc
 // ~/.config/waybar/config.jsonc
 
 "modules-right": ["custom/hyprrecord"],
@@ -178,9 +186,9 @@ To start, add the `--waybar` flag to your command and configure with a custom mo
   "exec-if": "pgrep 'wl-screenrec'",
   "signal": 12
 }
-
 ```
-``` css
+
+```css
 /* ~/.config/waybar/style.css */
 
 #custom-hyprrecord {
@@ -188,8 +196,8 @@ To start, add the `--waybar` flag to your command and configure with a custom mo
 }
 ```
 
->[!NOTE]\
->The custom module must use signal 12 to integrate with the script.
+> [!NOTE]\
+> The custom module must use signal 12 to integrate with the script.
 
 ## Features planned for the future
 
