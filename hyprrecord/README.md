@@ -48,8 +48,8 @@ Add flake as input:
 {
   inputs = {
     # your inputs ...
-    hyprrecord = {
-      url = "github:ooks-io/hyprrecord";
+    ooks-scripts = {
+      url = "github:ooks-io/scripts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -86,7 +86,7 @@ Add the package to configuration:
 #home.nix
 { pkgs, inputs, ... }:
 {
-  home.packages = [ inputs.hyprrecord.packages.${pkgs.system}.hyprrecord ];
+  home.packages = [ inputs.ooks-scripts.packages.${pkgs.system}.hyprrecord ];
 }
 ```
 
@@ -94,7 +94,7 @@ Add the package to configuration:
 #configuration.nix
 { pkgs, inputs, ... }:
 {
-  environment.systemPackages = [ inputs.hyprrecord.packages.${pkgs.system}.hyprrecord ];
+  environment.systemPackages = [ inputs.ooks-scripts.packages.${pkgs.system}.hyprrecord ];
 }
 ```
 
