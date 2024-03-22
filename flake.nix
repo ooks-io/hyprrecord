@@ -14,7 +14,7 @@
     pkgsFor = nixpkgs.legacyPackages;
   in {
     overlays.default = _: prev: {
-      hyprrecord = prev.callPackage ./default.nix {hyprland = null;};
+      hyprrecord = prev.callPackage ./hyprrecord {hyprland = null;};
     };
 
     packages = genSystems (system: self.overlays.default null pkgsFor.${system});
