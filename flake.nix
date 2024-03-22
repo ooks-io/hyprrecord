@@ -15,11 +15,10 @@
   in {
     overlays.default = _: prev: {
       hyprrecord = prev.callPackage ./hyprrecord {hyprland = null;};
+      powermenu = prev.callPackage ./powermenu {hyprland = null;};
     };
 
     packages = genSystems (system: self.overlays.default null pkgsFor.${system});
-
-    defaultPackage = genSystems (system: self.packages.${system}.hyprrecord);
 
     formatter = genSystems (system: pkgsFor.${system}.alejandra);
   };

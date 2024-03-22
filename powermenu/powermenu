@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+pid_file="/tmp/my_countdown.pid"
+
+DRY=
+COUNTDOWN=
+
+while [ $# -gt 0 ]; do
+  key="$1"
+  case $key in
+  -c | --countdown)
+    COUNTDOWN=true
+    shift
+    ;;
+  -d | --dry)
+    DRY=true
+    shift
+    ;;
+  *)
+    break
+    ;;
+  esac
+done
+
+notify() {
+  notify-send -u critical -a system-notify -t 1000 -h string:x-canonical-private-synchronous:anything "$@"
+}
+
+# Used for development, instead of running command, notifies if command was successful and exits.
+dry_success() {
+  if [ "$DRY" == "true" ]; then
+    TITLE="Action Successful:"
+    notify "$TITLE" "$1"
+    exit 0
+  fi
+}
+
+cancel() {
+  if [ -f "$pid_file" ]; then
+    # Read the process ID from the file and kill the process
+    kill "$(cat "$pid_file")" &>/dev/null
+    notify-send "Action canceled"
+    rm -f "$pid_file"
+  else
+    echo "No countdown to cancel."
+  fi
+}
+
+countdown() {
+  if [ "$COUNTDOWN" == "true" ]; then
+    msg="${1:-doing something}"
+    echo $$ >"$pid_file"
+    for i in {5..1}; do
+      notify-send "$msg in $i" -h string:x-canonical-private-synchronous:anything
+      sleep 1
+    done
+    notify-send "Action complete"
+    rm -f "$pid_file"
+  fi
+}
+
+logout() {
+  countdown "Logging out"
+  dry_success "Logged out"
+  PROCESS="Hyprland|\.Hyprland-wrapp"
+  if pgrep -x $PROCESS >/dev/null; then
+    hyprctl dispatch exit 0
+    sleep 2
+    if pgrep -x $PROCESS; then
+      pkill -9 $PROCESS
+    fi
+  fi
+
+}
+
+poweroff() {
+  countdown "Shutting down"
+  dry_success "Shutdown"
+  poweroff
+}
+
+lock() {
+  dry_success "Screen Locked"
+  hyprlock
+}
+
+reboot() {
+  countdown "Rebooting"
+  dry_success "Reboot"
+  reboot
+}
+
+suspend() {
+  countdown "Suspending"
+  dry_success "Suspend"
+  suspend
+}
+
+dmenu() {
+  selection=$(echo -e "󰜺 Cancel\n Reboot\n Lock\n󰍃 Logout\n󰐥 Shutdown\n󰒲 Suspend" | rofi -dmenu -i -theme-str 'window {children: [ listview ];}')
+
+  case "$selection" in
+  "󰐥 Shutdown") poweroff ;;
+  " Reboot") reboot ;;
+  " Lock") lock ;;
+  "󰍃 Logout") logout ;;
+  "󰜺 Cancel") cancel ;;
+  "󰒲 Suspend") suspend ;;
+  *)
+    echo "ERROR" "Invalid option"
+    exit 1
+    ;;
+  esac
+}
+# Check if the script is already running and decide to cancel or start countdown
+if [ -f "$pid_file" ]; then
+  cancel
+else
+  ACTION=${1:-usage}
+  case "$ACTION" in
+  logout)
+    logout
+    ;;
+  poweroff)
+    poweroff
+    ;;
+  reboot)
+    reboot
+    ;;
+  lock)
+    lock
+    ;;
+  usage)
+    echo " Usage: powermenu [OPTION]... [ACTION usage|dmenu|logout|poweroff|reboot|lock]"
+    echo ""
+    echo "Options:"
+    echo "  -c, --countdown       Enable 5 seconds countdown before action is performed"
+    echo "  -d, --dry             Substitute action for notification, used for debug/development"
+    echo ""
+    echo "Actions:"
+    echo "  usage                 Print help information"
+    echo "  dmenu                 Open menu with rofi for selecting action"
+    echo "  logout                Kills current active Hyprland session"
+    echo "  poweroff              Shut down current host"
+    echo "  reboot                Restart current host"
+    echo "  lock                  Locks current session with hyprlock"
+    echo ""
+    ;;
+  dmenu)
+    dmenu
+    ;;
+  *)
+    echo "Invalid action: $ACTION (expecting: usage|logout|poweroff|reboot|lock)"
+    ;;
+  esac
+fi
