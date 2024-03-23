@@ -54,7 +54,7 @@ countdown() {
       notify-send "$msg in $i" -h string:x-canonical-private-synchronous:anything
       sleep 1
     done
-    notify-send "Action complete"
+    echo "Countdown done"
     rm -f "$pid_file"
   fi
 }
@@ -100,11 +100,11 @@ action_dmenu() {
   selection=$(echo -e " Reboot\n Lock\n󰍃 Logout\n󰐥 Shutdown\n󰒲 Suspend" | rofi -dmenu -i)
 
   case "$selection" in
-  "󰐥 Shutdown") poweroff ;;
-  " Reboot") reboot ;;
-  " Lock") lock ;;
-  "󰍃 Logout") logout ;;
-  "󰒲 Suspend") suspend ;;
+  "󰐥 Shutdown") action_poweroff ;;
+  " Reboot") action_reboot ;;
+  " Lock") action_lock ;;
+  "󰍃 Logout") action_logout ;;
+  "󰒲 Suspend") action_suspend ;;
   *)
     echo "ERROR" "Invalid option"
     exit 1
