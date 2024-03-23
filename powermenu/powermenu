@@ -59,7 +59,7 @@ countdown() {
   fi
 }
 
-logout() {
+action_logout() {
   countdown "Logging out"
   dry_success "Logged out"
   PROCESS="Hyprland|\.Hyprland-wrapp"
@@ -73,30 +73,30 @@ logout() {
 
 }
 
-poweroff() {
+action_poweroff() {
   countdown "Shutting down"
   dry_success "Shutdown"
   poweroff
 }
 
-lock() {
+action_lock() {
   dry_success "Screen Locked"
   hyprlock
 }
 
-reboot() {
+action_reboot() {
   countdown "Rebooting"
   dry_success "Reboot"
   reboot
 }
 
-suspend() {
+action_suspend() {
   countdown "Suspending"
   dry_success "Suspend"
   suspend
 }
 
-dmenu() {
+action_dmenu() {
   selection=$(echo -e " Reboot\n Lock\n󰍃 Logout\n󰐥 Shutdown\n󰒲 Suspend" | rofi -dmenu -i)
 
   case "$selection" in
@@ -118,23 +118,23 @@ else
   ACTION=${1:-usage}
   case "$ACTION" in
   logout)
-    logout
+    action_logout
     ;;
   poweroff)
-    poweroff
+    action_poweroff
     ;;
   reboot)
-    reboot
+    action_reboot
     ;;
   lock)
-    lock
+    action_lock
     ;;
   usage)
     echo " Usage: powermenu [OPTION]... [ACTION usage|dmenu|logout|poweroff|reboot|lock]"
     echo ""
     echo "Options:"
     echo "  -c, --countdown       Enable 5 seconds countdown before action is performed"
-    echo "  -d, --dry             Substitute action for notification, used for debug/development"
+    echo "  -d, --dry             Print instead of perform action debug/development"
     echo ""
     echo "Actions:"
     echo "  usage                 Print help information"
@@ -146,7 +146,7 @@ else
     echo ""
     ;;
   dmenu)
-    dmenu
+    action_dmenu
     ;;
   *)
     echo "Invalid action: $ACTION (expecting: usage|logout|poweroff|reboot|lock)"

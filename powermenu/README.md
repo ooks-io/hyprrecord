@@ -89,7 +89,7 @@ $ powermenu [OPTIONS]... [ACTIONS]
 | Command            | Result                                                           |
 | ------------------ | ---------------------------------------------------------------- |
 | `-c` `--countdown` | Enable 5 second countdown before performing action, except lock. |
-| `-d` `--dry`       | Substitute action for notification, used for debugging.          |
+| `-d` `--dry`       | Print instead of perform action, used for debugging.             |
 
 ### Actions
 
