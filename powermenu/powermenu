@@ -97,14 +97,13 @@ suspend() {
 }
 
 dmenu() {
-  selection=$(echo -e "󰜺 Cancel\n Reboot\n Lock\n󰍃 Logout\n󰐥 Shutdown\n󰒲 Suspend" | rofi -dmenu -i -theme-str 'window {children: [ listview ];}')
+  selection=$(echo -e " Reboot\n Lock\n󰍃 Logout\n󰐥 Shutdown\n󰒲 Suspend" | rofi -dmenu -i)
 
   case "$selection" in
   "󰐥 Shutdown") poweroff ;;
   " Reboot") reboot ;;
   " Lock") lock ;;
   "󰍃 Logout") logout ;;
-  "󰜺 Cancel") cancel ;;
   "󰒲 Suspend") suspend ;;
   *)
     echo "ERROR" "Invalid option"
