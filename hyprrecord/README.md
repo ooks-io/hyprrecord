@@ -1,5 +1,6 @@
 > [!CAUTION]\
-> Currently not functioning on nvidia.
+> Currently not functioning on nvidia. Script will exit if
+> `LIBVA_DRIVER_NAME = nvidia`.
 
 > [!WARNING]\
 > Still in a prototype stage. Script is currently hacked together and requires
@@ -109,10 +110,10 @@ $ hyprrecord [OPTION]... [TYPE] [SUBJECT] [ACTION]
 
 ### Options
 
-| Command          | Result                                                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `-a`, `--audio`  | Enable audio recording, uses [pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get the current default sink |
-| `-w`, `--waybar` | Enable Waybar integration. See [Waybar Integration](#waybar-integration) for more infomation.                                         |
+| Command                    | Result                                                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `-a`, `--audio`            | Enable audio recording, uses [pactl](https://manpages.ubuntu.com/manpages/jammy/en/man1/pactl.1.html) to get the current default sink |
+| `-w`, `--waybar` `{value}` | Enable Waybar integration. See [Waybar Integration](#waybar-integration) for more infomation.                                         |
 
 ### Types
 
@@ -156,13 +157,13 @@ To add keybinding to hyprland you can add these lines to your _hyprland.conf_
 # ~/.config/hypr/hyprland.conf
 
 # Record entire screen with sound, save and copy into clipboard
-bind = SUPER, R, exec, hyprrecord -a screen copysave video
+bind = SUPER, R, exec, hyprrecord -a video screen copysave
 
 # Record area, convert to gif, put recording into clipboard
-bind = SUPER CTRL, R, exec, hyprrecord area copy gif
+bind = SUPER CTRL, R, exec, hyprrecord gif area copy
 
-# Record area with sound, save to recording dir and integrate with waybar  
-bind = SUPER SHIFT, R, exec, hyprrecord -a area copysave video
+# Record area with sound, copy into clipboard, save to recording directory and integrate with waybar  
+bind = SUPER SHIFT, R, exec, hyprrecord --waybar 12 -a video area copysave
 ```
 
 ## Waybar Integration
@@ -170,8 +171,11 @@ bind = SUPER SHIFT, R, exec, hyprrecord -a area copysave video
 Waybar integration is achieved by sending a signal to waybar when recording
 starts and stops.
 
-To start, add the `--waybar` flag to your command and configure with a custom
-moddule in waybar's configuration:
+Add the `--waybar` flag followed by the intended signal to your command eg
+(`--waybar 8`) and add a custom module to Waybar's configuration:
+
+> [!NOTE]\
+> 12 is the default signal used if no value is provided.
 
 ```jsonc
 // ~/.config/waybar/config.jsonc
@@ -184,7 +188,7 @@ moddule in waybar's configuration:
   "exec": "echo ",
   "tooltip": "false",
   "exec-if": "pgrep 'wl-screenrec'",
-  "signal": 12
+  "signal": 12 // Signal used in waybar flag
 }
 ```
 
@@ -196,12 +200,12 @@ moddule in waybar's configuration:
 }
 ```
 
-> [!NOTE]\
-> The custom module must use signal 12 to integrate with the script.
-
 ## Features planned for the future
 
-- Microphone option (_requires pipewire creating a virtual output with multiple
-  audio streams_)
-- Convert to WebP (_will require ffmpeg with libwebp_)
-- AGS support
+- **Microphone option** (_requires pipewire creating a virtual output with
+  multiple audio streams_)
+- **Convert to WebP** (_will require ffmpeg with libwebp_)
+- **AGS support**
+- **Nvidia support** (_currently there are issues with wl-screenrec and nvidia
+  vaapi, I could temporarily get around this by using wf-recorder if nvidia is
+  detected..._)
