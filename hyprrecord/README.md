@@ -1,3 +1,6 @@
+> [!CAUTION]\
+> Currently not functioning on nvidia.
+
 > [!WARNING]\
 > Still in a prototype stage. Script is currently hacked together and requires
 > cleanup. Feedback welcome.
