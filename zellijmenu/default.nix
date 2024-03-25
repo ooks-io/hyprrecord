@@ -3,6 +3,8 @@
   stdenvNoCC,
   makeWrapper,
   coreutils,
+  gum,
+  rofi-wayland,
 }:
 stdenvNoCC.mkDerivation {
   pname = "zellijmenu";
@@ -19,7 +21,10 @@ stdenvNoCC.mkDerivation {
   postInstall = ''
     wrapProgram $out/bin/powermenu --prefix PATH ';' \
       "${lib.makeBinPath ([
-        coreutils ])}"
+        coreutils 
+        gum 
+        rofi-wayland
+        ])}"
   '';
 
   meta = with lib; {
