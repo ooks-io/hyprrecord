@@ -19,7 +19,7 @@ stdenvNoCC.mkDerivation {
   makeFlags = ["PREFIX=$(out)"];
 
   postInstall = ''
-    wrapProgram $out/bin/powermenu --prefix PATH ';' \
+    wrapProgram $out/bin/zellijmenu --prefix PATH ';' \
       "${lib.makeBinPath ([
         coreutils 
         gum 
