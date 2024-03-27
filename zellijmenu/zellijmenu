@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+  -n) spawn_terminal=1 ;;
+  *)
+    echo "Unknown parameter: $1" >&2
+    exit 1
+    ;;
+  esac
+  shift
+done
+
 zellij_cmd() {
-  if [ -t 0 ]; then
-    zellij "$@"
-  else
+  if [[ "$spawn_terminal" -eq 1 ]]; then
     $TERM -e zellij "$@"
+  else
+    zellij "$@"
   fi
 }
 
