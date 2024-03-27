@@ -1,141 +1,85 @@
 #!/usr/bin/env bash
-notify() {
-  notify-send -t 3000 -a zellij-menu "$@"
-}
-
-notify_error() {
-  TITLE=${2:-"Zellij Menu"}
-  MESSAGE=${1:-"Unknown error"}
-  notify -u critical "$TITLE" "$MESSAGE"
-}
-
-notify_exit() {
-  notify_error "$1"
-  echo "$1"
-  exit 2
-}
-
-gum_zjm() {
-
-  gum_input_session_name() {
-    gum input --header="Session name:" --placeholder="Enter session name"
-  }
-
-  gum_choose_action() {
-    gum choose --header="Session '$1' already exists, what would you like to do?" "Attach" "Kill and Create" "Exit"
-  }
-
-  gum_layout_picker() {
-    choice=$(gum choose --header="What layout would you like to use?" "Default" "Choose" "Exit")
-    case $choice in
-    "Default")
-      echo ""
-      ;;
-    "Choose")
-      layout=$(find ~/.config/zellij/layouts . -name "*.kdl" | sed 's|.*/||; s/\.kdl$//' | gum choose --header="What layout would you like to use?")
-      if [ -z "$layout" ]; then
-        echo "NO_LAYOUT_CHOSEN"
-      else
-        echo "$layout"
-      fi
-      ;;
-    "Exit")
-      echo "exiting..." &
-      exit 0
-      ;;
-    *)
-      echo "exiting..." &
-      exit 0
-      ;;
-    esac
-  }
-
-  local session_name=$1
-
-  if [ -z "$session_name" ]; then
-    session_name="$(gum input --header="Session name:" --placeholder="")"
-    if [ -z "$session_name" ]; then
-      echo "No session name provided, exiting..." &
-      exit 0
-    fi
-  fi
-
-  # Check if the session exists
-  if zellij list-sessions -s | grep -q "$session_name"; then
-    notify "Session '$session_name' already exists."
-
-    action=$(gum choose "Attach" "Kill and Create" "Exit")
-
-    case $action in
-    "Attach")
-      zellij attach "$session_name"
-      echo "attached to $session_name" &
-      exit 0
-      ;;
-    "Kill and Create")
-      zellij kill-session "$session_name"
-      ;;
-    "Exit")
-      echo "Exiting without action" &
-      exit 0
-      ;;
-    *)
-      echo "Exiting without action" &
-      exit 0
-      ;;
-    esac
-  fi
-  layout=$(gum_layout_picker)
-  if [ "$layout" == "NO_LAYOUT_CHOSEN" ]; then
-    echo "No layout selected, exiting..."
-    exit 0
-  elif [ -n "$layout" ]; then
-    zellij -s "$session_name" --layout "$layout"
+zellij_cmd() {
+  if [ -t 0 ]; then
+    zellij "$@"
   else
-    zellij -s "$session_name"
+    $TERM -e zellij "$@"
   fi
 }
 
-dmenu_zjm() {
-  sessions=$(zellij ls -s | tr ' ' '\n')
-  selection=$(echo -e "$sessions\nNew session" | rofi -dmenu -i -mesg "Select Zellij session:")
-
-  case $selection in
-  "New session")
-    # Prompt for new session name
-    new_session_name=$(rofi -dmenu -mesg "Enter new session name:")
-
-    # Get layout for zellij layouts directory
-    layouts=$(find ~/.config/zellij/layouts . -name "*.kdl" | sed 's|.*/||; s/\.kdl$//' | tr ' ' '\n')
-    choose_layout=$(echo -e "$layouts" | rofi -dmenu -i -mesg "Select Layout") || notify_exit "No layout chosen, exiting..."
-
-    if [[ -n $new_session_name ]]; then
-      zellij -s "$new_session_name" --layout "$choose_layout"
-    fi
-    ;;
-  "")
-    notify_exit "No selection made, exiting..."
-    ;;
-  *)
-    zellij attach "$selection"
-    ;;
-  esac
-
+rofi_cmd() {
+  MSG=$1
+  rofi -dmenu -i -mesg "$MSG"
+}
+session_list() {
+  zellij ls -s | tr ' ' '\n'
 }
 
-# Main function
+session_menu() {
+  echo -e "$(session_list)" | rofi_cmd "Session:"
+}
+
+layout_menu() {
+  layout_list=$(find ~/.config/zellij/layouts -name "*.kdl" | sed 's|.*/||; s/\.kdl$//' | tr ' ' '\n')
+  echo -e "$layout_list" | rofi_cmd "Select layout for $session_name:"
+}
+
+session_select() {
+  session_name=$(session_menu)
+  if [[ -z "$session_name" ]]; then
+    echo "Nothing selected."
+    exit 0
+  fi
+
+  # Check if the session name exists in the session list
+  if session_list | grep -qx "$session_name"; then
+    session_action="select"
+  else
+    session_action="create"
+  fi
+}
+
+selection_menu() {
+  echo -e "Attach\nDelete\nBack" | rofi_cmd "$session_name action:"
+}
+
 main() {
-  action="$1"
+  while true; do
+    session_select
 
-  case "$action" in
-  --dmenu)
-    shift
-    dmenu_zjm
-    ;;
-  *)
-    gum_zjm "$@"
-    ;;
-  esac
+    case $session_action in
+    "create")
+      layout="$(layout_menu)"
+      if [ -z "$layout" ]; then
+        echo "no layout given"
+        continue
+      fi
+      zellij_cmd -s "$session_name" --layout "$layout"
+      break
+      ;;
+    "select")
+      selection=$(selection_menu)
+      case $selection in
+      "Attach")
+        zellij_cmd attach "$session_name"
+        break
+        ;;
+      "Delete")
+        zellij delete-session --force "$session_name"
+        ;;
+      "Back")
+        echo "Going back."
+        ;;
+      *)
+        echo "Going Back."
+        ;;
+      esac
+      ;;
+    *)
+      echo "Going Back"
+      ;;
+    esac
+  done
 }
 
-main "$@"
+main
