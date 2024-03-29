@@ -34,38 +34,38 @@ zellij_cmd() {
   fi
 }
 
-session_list() {
-  zellij ls -s | tr ' ' '\n'
-}
-
-layout_menu() {
-  layout_list=$(find ~/.config/zellij/layouts -name "*.kdl" | sed 's|.*/||; s/\.kdl$//' | tr ' ' '\n')
-  echo -e "$layout_list" | rofi_cmd "Select layout for $session_name:"
-}
-
-session_menu() {
-  echo -e "$(session_list)" | rofi_cmd "Session:"
-}
-
-session_select() {
-  session_name=$(session_menu)
-  if [[ -z "$session_name" ]]; then
-    echo "Nothing selected."
-    exit 0
-  fi
-
-  if session_list | grep -qx "$session_name"; then
-    session_action="select"
-  else
-    session_action="create"
-  fi
-}
-
-selection_menu() {
-  echo -e "Attach\nDelete\nBack" | rofi_cmd "$session_name action:"
-}
-
 session_manager() {
+  session_list() {
+    zellij ls -s | tr ' ' '\n'
+  }
+
+  layout_menu() {
+    layout_list=$(find ~/.config/zellij/layouts -name "*.kdl" | sed 's|.*/||; s/\.kdl$//' | tr ' ' '\n')
+    echo -e "$layout_list" | rofi_cmd "Select layout for $session_name:"
+  }
+
+  session_menu() {
+    echo -e "$(session_list)" | rofi_cmd "Session:"
+  }
+
+  session_select() {
+    session_name=$(session_menu)
+    if [[ -z "$session_name" ]]; then
+      echo "Nothing selected."
+      exit 0
+    fi
+
+    if session_list | grep -qx "$session_name"; then
+      session_action="select"
+    else
+      session_action="create"
+    fi
+  }
+
+  selection_menu() {
+    echo -e "Attach\nDelete\nBack" | rofi_cmd "$session_name action:"
+  }
+
   while true; do
     session_select
     case $session_action in
@@ -95,7 +95,6 @@ session_manager() {
   done
 }
 
-# Integrate project management from the first script
 project_manager() {
   get_project_type() {
     while true; do
@@ -129,6 +128,7 @@ project_manager() {
       fi
     done
   }
+
   get_session_name() {
     session_name="$project_name"
     if zellij ls | grep -q "^$session_name$"; then
@@ -155,6 +155,16 @@ project_manager() {
     esac
   }
 
+  select_project() {
+    project_name=$(find "$type_dir" -maxdepth 1 -mindepth 1 -type d ! -name .git -exec basename {} \; | rofi_cmd "Select project:")
+    project_dir="$type_dir/$project_name"
+
+    cd "$project_dir" || return 1
+    get_session_name
+    get_layout
+    zellij_cmd -s "$session_name" --layout "$layout"
+  }
+
   create_and_start_project() {
     mkdir -p "$project_dir"
     cd "$project_dir" || return 1
@@ -166,7 +176,7 @@ project_manager() {
       ;;
     nix)
       echo "Creating Nix project..."
-      # Additional commands for setting up a Nix project can be added here
+      # still need to implement
       ;;
     *)
       echo "Unknown project type."
@@ -178,16 +188,25 @@ project_manager() {
     get_layout
     zellij_cmd -s "$session_name" --layout "$layout"
   }
+  project_action=$(echo -e "Create Project\nSelect Project" | rofi_cmd "Project action:")
+  case "$project_action" in
+  "Create Project")
+    get_project_type
+    get_project_name
+    create_and_start_project
+    ;;
+  "Select Project")
+    get_project_type
+    select_project
+    ;;
+  esac
 
-  get_project_type
-  get_project_name
-  create_and_start_project
 }
 
 main() {
-  action=$(echo -e "New Project\nSessions" | rofi_cmd "Choose action:")
-  case "$action" in
-  "New Project") project_manager ;;
+  main_action=$(echo -e "Projects\nSessions" | rofi_cmd "Choose action:")
+  case "$main_action" in
+  "Projects") project_manager ;;
   "Sessions") session_manager ;;
   *) echo "Invalid option, exiting." ;;
   esac
