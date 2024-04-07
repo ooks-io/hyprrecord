@@ -3,7 +3,6 @@
   stdenvNoCC,
   makeWrapper,
   coreutils,
-  gum,
   rofi-wayland,
 }:
 stdenvNoCC.mkDerivation {
@@ -19,10 +18,9 @@ stdenvNoCC.mkDerivation {
   makeFlags = ["PREFIX=$(out)"];
 
   postInstall = ''
-    wrapProgram $out/bin/zellijmenu --prefix PATH ';' \
-      "${lib.makeBinPath ([
+    wrapProgram $out/bin/zellijmenu --prefix PATH : \
+      "/run/wrappers/bin:${lib.makeBinPath ([
         coreutils 
-        gum 
         rofi-wayland
         ])}"
   '';
