@@ -28,7 +28,7 @@ rofi_cmd() {
 
 zellij_cmd() {
   if [[ "$spawn_terminal" -eq 1 ]]; then
-    $TERM -e zellij "$@"
+    $TERM zellij "$@"
   else
     zellij "$@"
   fi
